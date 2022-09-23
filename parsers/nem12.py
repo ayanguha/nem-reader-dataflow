@@ -1,19 +1,16 @@
-
 from datetime import datetime
 from typing import Dict, List, NamedTuple, Optional
 import json
 
+from .define import (
 
-class IntervalMeterNMIDetailsRecord:
-    nmi: str
-    nmi_configuration: str
-    register_id: str
-    nmi_suffix: str
-    mdm_datastream_identifier: str
-    meter_serial_number: str
-    uom: str
+    HeaderRecord,
+    AbstractMeterNMIDetailsRecord
+)
+
+class IntervalMeterNMIDetailsRecord(AbstractMeterNMIDetailsRecord):
+
     interval_length: int
-    next_scheduled_read_date: Optional[datetime]
 
     def __init__(self, nmi_details ):
         self.nmi = nmi_details[1]
@@ -26,22 +23,7 @@ class IntervalMeterNMIDetailsRecord:
         self.interval_length = int(nmi_details[8])
         self.next_scheduled_read_date = nmi_details[9]
 
-
-class HeaderRecord:
-    version_header: str
-    creation_date: Optional[datetime]
-    from_participant: str
-    to_participant: str
-    file_name: str
-
-    def __init__(self, header,file_name ):
-        self.file_name = file_name
-        self.version_header = header[1]
-        self.creation_date = header[2]
-        self.from_participant = header[3]
-        self.to_participant = header[4]
-
-class SingleReadingRecord:
+class SingleIntervalReadRecord:
     interval_date: datetime
     interval_value: str
     interval_reading: str
@@ -57,17 +39,17 @@ class SingleReadingRecord:
         self.quality_method = read['quality_method']
 
 
-class ReadingDetailsRecord:
+class IntervalReadingDetailsRecord:
     header: HeaderRecord
     nmi_details: IntervalMeterNMIDetailsRecord
-    single_read: SingleReadingRecord
+    single_read: SingleIntervalReadRecord
 
     def __init__(self,file_name, header_record, nmi_details_record, single_read):
         self.file_name = header_record.file_name
-        self.version_header = header_record.version_header
-        self.creation_date = header_record.creation_date
-        self.from_participant = header_record.from_participant
-        self.to_participant = header_record.to_participant
+        self.header = header_record
+        self.nmi_details = nmi_details_record
+        self.single_read = single_read
+        '''self.to_participant = header_record.to_participant
 
         self.nmi = nmi_details_record.nmi
         self.nmi_configuration = nmi_details_record.nmi_configuration
@@ -83,6 +65,39 @@ class ReadingDetailsRecord:
         self.interval_value = single_read.interval_value
         self.interval_read = single_read.interval_read
         self.quality_method = single_read.quality_method
-
+'''
     def serialize(self):
         return json.dumps(self, default=lambda o: o.__dict__)
+
+def create_interval_record(data, header_obj, file_name):
+    records = {}
+    for row in data:
+        if row[0] == '200':
+            nmi_details = IntervalMeterNMIDetailsRecord(row)
+            record_key = nmi_details.nmi + " ~ " + nmi_details.nmi_suffix
+            interval_length = nmi_details.interval_length
+            if record_key not in records:
+                records[record_key] = {}
+                records[record_key]['HeaderRecord'] = header_obj
+                records[record_key]['file_name'] = file_name
+                records[record_key]['IntervalMeterNMIDetailsRecord'] = nmi_details
+                records[record_key]['SingleIntervalReadRecord'] = {}
+        elif row[0] == '300':
+            read_date = row[1]
+            num_reads = int(24*60/interval_length)
+            quality_method = row[num_reads + 2]
+            for k in range(1,num_reads+1):
+                individual_reading_key = read_date + '~' + str(k)
+                read = {'read_date': read_date, 'interval': str(k), 'reading': row[k+1], 'quality_method': quality_method}
+
+                records[record_key]['SingleIntervalReadRecord'][individual_reading_key] = SingleIntervalReadRecord(read)
+
+        elif row[0] == '400':
+            start_pos = int(row[1])
+            end_pos = int(row[2])
+            quality_method = row[3]
+            for k in range(start_pos, end_pos + 1):
+                individual_reading_key = read_date + '~' + str(k)
+                records[record_key]['SingleIntervalReadRecord'][individual_reading_key].quality_method = quality_method
+
+    return list(records.values())
