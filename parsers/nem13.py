@@ -59,8 +59,7 @@ class BasicReadingDetailsRecord:
     nmi_details: BasicMeterNMIDetailsRecord
     single_read: SingleBasicReadRecord
 
-    def __init__(self,file_name, header_record, nmi_details_record, single_read):
-        self.file_name = header_record.file_name
+    def __init__(self,header_record, nmi_details_record, single_read):
         self.header = header_record
         self.nmi_details = nmi_details_record
         self.single_read = single_read

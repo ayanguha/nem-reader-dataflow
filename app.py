@@ -1,5 +1,5 @@
 import csv
-import os
+import os, sys
 
 
 import apache_beam as beam
@@ -24,7 +24,7 @@ def parse_file(tup):
 
     if header[0] == '100':
         header_obj = HeaderRecord(header,file_name)
-        
+
     else:
         raise
 
@@ -44,18 +44,20 @@ def normalizer(record):
         nmi_details = record['IntervalMeterNMIDetailsRecord']
         for read_key in record['SingleIntervalReadRecord']:
             read = record['SingleIntervalReadRecord'][read_key]
-            rd = nem12.IntervalReadingDetailsRecord(file_name, header, nmi_details, read)
+            rd = nem12.IntervalReadingDetailsRecord(header, nmi_details, read)
             normalized.append(rd)
     if header.version_header == 'NEM13':
         nmi_details = record['BasicMeterNMIDetailsRecord']
         read = record['SingleBasicReadRecord']
-        rd = nem13.BasicReadingDetailsRecord(file_name, header, nmi_details, read)
+        rd = nem13.BasicReadingDetailsRecord(header, nmi_details, read)
         normalized.append(rd)
     return normalized
 
 
-def main():
-    filenames = ["tests/nem13/" + f for f in os.listdir('tests/nem13')]
+def run(input_folder, output_folder):
+
+    filenames = [input_folder + f for f in os.listdir(input_folder)]
+    print(output_folder)
     with beam.Pipeline() as pipeline:
         plants = (
           pipeline
@@ -69,12 +71,14 @@ def main():
           | "Separate each individual read in a list" >> beam.Map(normalizer)
           | "Flatten the list" >> beam.FlatMap(lambda x: x)
           | "Serialize the class" >> beam.Map(lambda x: x.serialize())
-
-          | beam.Map(print)
+          | beam.io.WriteToText(output_folder)
+          #| beam.Map(print)
           )
 
 
 
 
 if __name__ == '__main__':
-    main()
+    input_folder = sys.argv[1]
+    output_folder = sys.argv[2]
+    run(input_folder, output_folder)

@@ -44,28 +44,11 @@ class IntervalReadingDetailsRecord:
     nmi_details: IntervalMeterNMIDetailsRecord
     single_read: SingleIntervalReadRecord
 
-    def __init__(self,file_name, header_record, nmi_details_record, single_read):
-        self.file_name = header_record.file_name
+    def __init__(self,header_record, nmi_details_record, single_read):
         self.header = header_record
         self.nmi_details = nmi_details_record
         self.single_read = single_read
-        '''self.to_participant = header_record.to_participant
-
-        self.nmi = nmi_details_record.nmi
-        self.nmi_configuration = nmi_details_record.nmi_configuration
-        self.register_id = nmi_details_record.register_id
-        self.nmi_suffix = nmi_details_record.nmi_suffix
-        self.mdm_datastream_identifier = nmi_details_record.mdm_datastream_identifier
-        self.meter_serial_number = nmi_details_record.meter_serial_number
-        self.uom = nmi_details_record.uom
-        self.interval_length = nmi_details_record.interval_length
-        self.next_scheduled_read_date = nmi_details_record.next_scheduled_read_date
-
-        self.interval_date = single_read.interval_date
-        self.interval_value = single_read.interval_value
-        self.interval_read = single_read.interval_read
-        self.quality_method = single_read.quality_method
-'''
+        
     def serialize(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
