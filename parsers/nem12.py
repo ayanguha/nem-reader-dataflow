@@ -48,7 +48,7 @@ class IntervalReadingDetailsRecord:
         self.header = header_record
         self.nmi_details = nmi_details_record
         self.single_read = single_read
-        
+
     def serialize(self):
         return json.dumps(self, default=lambda o: o.__dict__)
 
@@ -82,5 +82,4 @@ def create_interval_record(data, header_obj, file_name):
             for k in range(start_pos, end_pos + 1):
                 individual_reading_key = read_date + '~' + str(k)
                 records[record_key]['SingleIntervalReadRecord'][individual_reading_key].quality_method = quality_method
-
     return list(records.values())
