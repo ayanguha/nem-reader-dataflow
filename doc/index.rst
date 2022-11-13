@@ -8,7 +8,7 @@ This library sets out to parse these NEM12 (interval metering data) and NEM13 (a
 
 Due Credit
 ======================================
-This project is heavily inspired by `neam-reader project <https://github.com/aguinane/nem-reader>`_
+This project is heavily inspired by `nem-reader project <https://github.com/aguinane/nem-reader>`_
 
 .. toctree::
    :maxdepth: 2

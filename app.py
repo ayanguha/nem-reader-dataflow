@@ -5,6 +5,8 @@ import os, sys
 import apache_beam as beam
 from apache_beam.io import fileio
 
+import uuid
+
 from parsers.define import (
     HeaderRecord
 )
@@ -57,7 +59,8 @@ def normalizer(record):
 def run(input_folder, output_folder):
 
     filenames = [input_folder + f for f in os.listdir(input_folder)]
-    print(output_folder)
+    uid = str(uuid.uuid4())
+    output_folder = output_folder + "/" + uid
     with beam.Pipeline() as pipeline:
         plants = (
           pipeline
